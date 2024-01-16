@@ -2,7 +2,7 @@ from c_layer import Layer
 import numpy as np
 from scipy import signal
 
-class Convolution_old(Layer):
+class Convolution(Layer):
     """
     Take an input, say RGB image of HxW dims /w 3 channels.
     Apply convolve with 3 channel kernel, and sum into one layer.
@@ -33,7 +33,7 @@ class Convolution_old(Layer):
 
         for i in range(self.output_num):                # number of 'RGB' kernels applied. means 1 kernel has '3' channels.
             for j in range(self.input_num_channels):    # apply each channel of each kernel to input channels. 
-                self.output[j] += signal.correlate2d(self.input[j], self.kernels[i,j], mode='valid') # i-th kern, j-th chann
+                self.output[i] += signal.correlate2d(self.input[j], self.kernels[i,j], mode='valid') # i-th kern, j-th chann
 
         return self.output
     
@@ -52,7 +52,7 @@ class Convolution_old(Layer):
         return self.input_grad
     
 
-class Convolution(Layer):
+class Convolution2(Layer):
     def __init__(self, input_shape, kernel_size, depth):
         input_depth, input_height, input_width = input_shape
         self.depth = depth

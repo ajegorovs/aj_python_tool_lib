@@ -11,7 +11,7 @@ import numpy as np
 def update_plot(x_data, y_data, plt_range_x, plt_range_y):
     plt.clf()
     plt.plot(x_data, y_data)#, label='Updated Data')
-    plt.yscale("log")
+    #plt.yscale("log")
     plt.xlabel('epochs')
     plt.ylabel('error')
     plt.xlim(*plt_range_x)
@@ -24,6 +24,7 @@ def train(network, loss, loss_prime, x_train, y_train, epochs = 1000, learning_r
     if verbose:
         plt_x = np.arange(0, epochs).astype(float)
         plt_y = np.zeros_like(plt_x)
+        z_len = len(str(epochs))
 
     for e in range(epochs):
         error = 0
@@ -42,6 +43,6 @@ def train(network, loss, loss_prime, x_train, y_train, epochs = 1000, learning_r
         error /= len(x_train)
         if verbose:
             plt_y[e] = error
-            if e % 2 == 0: update_plot(plt_x[:e], plt_y[:e], (0, epochs), (0, plt_y[0]))
-            print(f"{e + 1}/{epochs}, error={error}")
+            if e % 5 == 0: update_plot(plt_x[:e], plt_y[:e], (0, epochs), (0, plt_y[0]))
+            print(f"{e + 1:>{z_len}}/{epochs}, error={error}")
 
