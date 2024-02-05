@@ -1,4 +1,4 @@
-from c_layer import Layer
+from classes.c_layer import Layer
 import numpy as np
 
 class Reshape(Layer):

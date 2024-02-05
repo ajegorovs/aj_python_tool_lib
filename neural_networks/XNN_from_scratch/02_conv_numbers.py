@@ -3,19 +3,20 @@ import torch, torchvision, matplotlib.pyplot as plt, numpy as np, pickle, os
 from torchvision.transforms import ToTensor
 
 from network import train, predict
-from layer_conv import Convolution
-from activation_functions import Sigmoid
-from layer_reshape import Reshape
-from layer_dense import Dense
-from loss_functions import (binary_cross_entropy, binary_cross_entropy_prime)
+from classes.layer_conv import Convolution
+from classes.activation_functions import Sigmoid
+from classes.layer_reshape import Reshape
+from classes.layer_dense import Dense
+from classes.loss_functions import (binary_cross_entropy, binary_cross_entropy_prime)
 
 subset = [0,1,2]
 
 # create labels 0 = [1,0,0], 1 = [0,1,0], 2 = [0,0,1]
 target_transform = lambda y: torch.zeros(len(subset), dtype=torch.float).scatter_(dim=0, index=torch.tensor(y), value=1).numpy()
-
+workdir = os.path.split(os.path.relpath(__file__))[0]
+os.chdir(workdir)
 def pre_proc(subset, train = True, max_vals = 100):
-    data_train = iter(torchvision.datasets.MNIST(r'../microsoft_intro-machine-learning-pytorch/data', download=True,train=train,transform=ToTensor()))
+    data_train = iter(torchvision.datasets.MNIST(r'../data', download=True,train=train,transform=ToTensor()))
     asd = [];i = 0
     for k in range(1000):
         (a,b) = next(data_train)
@@ -53,12 +54,9 @@ convolved_shape_flattened = np.prod(convolved_shape)
 # and current network's settings are different it wont load save state
 descriptor = f'kn{num_kernels}ks{ker_size}dn{dense_nodes}'
 
-dir_base = os.path.split(os.path.relpath(__file__))[0]
-dir_save = os.path.join(dir_base, 'save_states')
+os.mkdir('save_states') if not os.path.exists('save_states') else 0
 
-os.mkdir(dir_save) if not os.path.exists(dir_save) else 0
-
-file_name = os.path.join(dir_save,'state_'+descriptor + '.pkl')
+file_name = os.path.join('save_states','state_'+descriptor + '.pkl')
 
 
 network = [

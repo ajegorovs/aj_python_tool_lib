@@ -1,4 +1,4 @@
-from c_activation import Activation
+from classes.c_activation import Activation
 import numpy as np
 
 class Tanh(Activation):

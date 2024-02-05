@@ -1,7 +1,7 @@
 import numpy as np
-from layer_dense import Dense
-from activation_functions import Tanh
-from loss_functions import (mse, mse_prime)
+from classes.layer_dense import Dense
+from classes.activation_functions import Tanh
+from classes.loss_functions import (mse, mse_prime)
 
 X = np.array([[0,0],[0,1],[1,0],[1,1]]).reshape(4,2,1)
 Y = np.array([[0],[1],[1],[0]]).reshape(4,1,1)
@@ -28,7 +28,7 @@ for e in range(epochs):
         grad = mse_prime(y, output)
 
         for layer in reversed(network):
-            grad = layer.backwards(grad, learning_rate)
+            grad = layer.backward(grad, learning_rate)
 
         error /= len(X)
     if e % 250 == 0: 
