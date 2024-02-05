@@ -3,6 +3,7 @@ neural_networks/XNN_from_scratch/__pycache__
 neural_networks/XNN_from_scratch/classes/__pycache__
 neural_networks/XNN_from_scratch/save_states
 neural_networks/data
+misc_tools/__pycache__
 data_processing/graphs/__pycache__
 data_processing/linalg_transforms/__pycache__
 plots/__pycache__
