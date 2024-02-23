@@ -19,6 +19,9 @@ neural_networks:
 
 plots/misc_tools:
     random methods that cannot be classified as standalone type.
+
+in vscode jupyter sets its working dir to file dir, so you cannot import modules from workspace. Change this:
+![jup_repo_dir](image.png)
     
 For future:
     -logging: https://www.youtube.com/watch?v=9L77QExPmI0

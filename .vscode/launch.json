@@ -11,8 +11,9 @@
             "program": "${file}",
             "console": "integratedTerminal",
             "justMyCode": true,
+            "cwd": "${fileDirname}",
             "env": {
-                "PYTHONPATH": "${workspaceFolder}"  // added this for module imports, looks like it does not set the root, but file dir instead
+                "PYTHONPATH": "${workspaceRoot}",  //  "${workspaceRoot}"${workspaceFolder}
             }
         }
     ]
