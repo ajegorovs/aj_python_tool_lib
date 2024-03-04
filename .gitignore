@@ -7,5 +7,6 @@ misc_tools/__pycache__
 data_processing/graphs/__pycache__
 data_processing/linalg_transforms/__pycache__
 data_processing/image_processing/__pycache__
+data_processing/media/VORTALL.mat
 plots/__pycache__
 runs
