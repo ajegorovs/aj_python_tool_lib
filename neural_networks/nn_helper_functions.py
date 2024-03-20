@@ -20,3 +20,9 @@ def conv2DT_dims(HW, kernel_size, stride= 1, padding= 0, output_padding= 0, dila
     kernel_size, stride, padding, output_padding, dilation = a
     HW_out = (HW - 1) * stride - 2* padding + dilation * (kernel_size - 1) + output_padding + 1
     return HW_out
+
+def init_weights_LSTM(dims: tuple, hidden_size: float):
+    rnd = torch.rand(size=dims)
+    rnd = 2*rnd - 1
+    return (rnd * torch.sqrt(torch.tensor(hidden_size))).to(torch.float)
+
