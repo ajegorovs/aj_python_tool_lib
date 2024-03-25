@@ -1,9 +1,9 @@
-neural_networks/__pycache__
-neural_networks/XNN_from_scratch/__pycache__
-neural_networks/XNN_from_scratch/classes/__pycache__
-neural_networks/LSTM_Long_Short_Term_Memory/__pycache__
-neural_networks/XNN_from_scratch/save_states
-neural_networks/data
+data_processing/neural_networks/__pycache__
+data_processing/neural_networks/XNN_from_scratch/__pycache__
+data_processing/neural_networks/XNN_from_scratch/classes/__pycache__
+data_processing/neural_networks/LSTM_Long_Short_Term_Memory/__pycache__
+data_processing/neural_networks/XNN_from_scratch/save_states
+data_processing/neural_networks/data
 misc_tools/__pycache__
 data_processing/graphs/__pycache__
 educational/linear_algebra/__pycache__
