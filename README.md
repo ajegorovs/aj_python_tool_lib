@@ -4,6 +4,7 @@ a sorted collection of templates which show different data processing methods.
 data_processing:<br>
     Many methods examined in this folder are taken from a book "Data-Driven Science and Engineering: Machine Learning, Dynamical Systems, and Control"  by Brunton and Kutz.<br>
     Morhpology, graphs and image processing scipts are snippets of code from my past experience.<br>
+    Plenty of examples from Regression and optimization.
 
 multiprocessing:
     Few templates for CPU/GPU parallization. <br>
@@ -16,6 +17,11 @@ neural_networks:<br>
     Hopfield_Networks- is an interesting approach of storing and restoring incomplete information by making original info (memories) into one-to-all connected dense network.<br>
     autoencoder- network for compression of restoration of data. It can modified for de-noising or retrieval of missing data. Variational autoencoder is a modification which changes how to view compressed state (latent space)- uit is viewed as probability distribution, from which by sampling, new data can be created.<br>
     GAN - somewhat similar to autoencoder (specially variational type). Except network has a critic, which learns if generated data looks authentic.<br>
+    DNN_solve_ODE - model learns to advance trajectory one step at a time.<br>
+    PINN_physics-informed-NN - model's learning is guided using loss function which includes ordinary differential equation (ODE). Or ODE parameters are retrieved from learning data.<br>
+    RNN_recurrent-NN -  classic recurrent network cell. Implementation from scratch and by using pytorch module.<br>
+    LSTM_Long_Short_Term_Memory - upgrade from RNN with long term memory. Remade forward pass (learns badly) and pytorch module implementation for reference.
+
 
 plots/misc_tools:<br>
     random methods that cannot be classified as standalone type.<br>

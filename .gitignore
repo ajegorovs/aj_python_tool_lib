@@ -1,7 +1,7 @@
 neural_networks/__pycache__
 neural_networks/XNN_from_scratch/__pycache__
 neural_networks/XNN_from_scratch/classes/__pycache__
-neural_networks/LSTM_Long_Short_Term_Mermory/__pycache__
+neural_networks/LSTM_Long_Short_Term_Memory/__pycache__
 neural_networks/XNN_from_scratch/save_states
 neural_networks/data
 misc_tools/__pycache__
