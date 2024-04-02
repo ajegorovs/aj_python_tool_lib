@@ -9,7 +9,7 @@ def string_matrix(matrix):
     body_rows_join  =    r' \\ '.join(body_rows)
     return r"\begin{bmatrix}" + body_rows_join + r"\end{bmatrix}"
 
-def print_tex(*args,column = False, style_fraction = 'inline'):
+def print_tex(*args,column = False, style_fraction = 'inline', frmt = '{:3.6f}'):
 
     a = ''
     for arg in args:
@@ -17,7 +17,9 @@ def print_tex(*args,column = False, style_fraction = 'inline'):
             if arg.dtype.type is not np.str_:
                 with warnings.catch_warnings():
                     warnings.filterwarnings("ignore", category=UserWarning)
-                    arg = latexify(arg, newline=False, arraytype="bmatrix", column = column, style_fraction = style_fraction)
+                    arg = latexify(arg, newline=False, arraytype="bmatrix", 
+                                   column = column, style_fraction = style_fraction,
+                                   frmt = frmt)
             else:
                 arg = string_matrix(arg)
         # else:
