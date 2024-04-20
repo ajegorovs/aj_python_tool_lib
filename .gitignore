@@ -5,6 +5,7 @@ data_processing/neural_networks/LSTM_Long_Short_Term_Memory/__pycache__
 data_processing/neural_networks/XNN_from_scratch/save_states
 data_processing/neural_networks/save_states
 data_processing/neural_networks/data
+data_processing/__pycache__
 misc_tools/__pycache__
 data_processing/graphs/__pycache__
 educational/linear_algebra/__pycache__
