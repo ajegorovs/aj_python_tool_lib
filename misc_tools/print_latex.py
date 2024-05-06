@@ -14,6 +14,8 @@ def print_tex(*args,column = False, style_fraction = 'inline', frmt = '{:3.6f}')
     a = ''
     for arg in args:
         if type(arg) != str:
+            if str(type(arg)) == "<class 'torch.Tensor'>":
+                arg = arg.clone().detach().cpu().numpy()
             if arg.dtype.type is not np.str_:
                 with warnings.catch_warnings():
                     warnings.filterwarnings("ignore", category=UserWarning)
