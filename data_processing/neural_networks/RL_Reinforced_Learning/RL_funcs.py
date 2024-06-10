@@ -89,8 +89,7 @@ class init_env():
         if eps    is None: eps    = self.eps
         policy[state] *= 0
         policy[state] += eps/self.NUM_ACTIONS
-        #policy[state]                  = np.ones(self.NUM_ACTIONS)*eps/self.NUM_ACTIONS
-        action_greedy                  = Qsa[state].argmax()
+        action_greedy                  = np.random.choice(np.where(Qsa[state] == Qsa[state].max())[0])
         policy[state][action_greedy]   =  1 - eps + eps/self.NUM_ACTIONS   
         
     def state_remap(self,state):
@@ -161,9 +160,9 @@ def plot(v_ace, v_ace_no, pol_ace, pol_ace_no, extent, lables1 = None, lables2 =
         ax[1,i].set_aspect(1)
 
     
-def plot_cliff_walking(policy):
+def plot_cliff_walking(policy,figsize=(12,4)):
     # ChatGPT + modified
-    fig, axes = plt.subplots(4, 12, figsize=(12,4), sharex=True,sharey=True)
+    fig, axes = plt.subplots(4, 12, figsize=figsize, sharex=True,sharey=True)
     plt.subplots_adjust(wspace=0, hspace=0)
     axes = axes.flatten()
     for i,(ax,arrows) in enumerate(zip(axes,policy)):
@@ -181,3 +180,13 @@ def plot_cliff_walking(policy):
         ax.set_xticks([])
         ax.set_yticks([])
     plt.show()
+
+
+def rew_ep_plot(env, fltr = 0):
+    plot_data = [env.test_rewards,env.steps_per_ep]
+    plot_y_lab= ['Mean cumulative reward','Mean number of steps per episode']
+    fig, axs = plt.subplots(1,2, figsize = (10,3))
+    for i, (ax, data, ylab) in enumerate(zip(axs,plot_data,plot_y_lab)):
+        ax.plot(*np.array([(i,r) for i,r in data.items() if i >fltr]).T)
+        ax.set_xlabel('# episodes')
+        ax.set_ylabel(ylab)
