@@ -190,3 +190,105 @@ def rew_ep_plot(env, fltr = 0):
         ax.plot(*np.array([(i,r) for i,r in data.items() if i >fltr]).T)
         ax.set_xlabel('# episodes')
         ax.set_ylabel(ylab)
+
+
+def argmax_random_choice(array):
+    results = np.zeros(shape=array.shape[:-1], dtype=int)
+    for index in np.ndindex(results.shape):
+        vals = array[index]
+        results[index] = np.random.choice(np.where(vals == vals.max())[0])
+    return results
+
+
+class base_env():
+    def __init__(self, env_name, *args, eps = 0.1,  **kwargs) -> None:
+        self.env                    = gym.make(env_name, *args, **kwargs)
+        # if space is multi-dimensional -> tuples of spaces
+        if type(self.env.observation_space) == gym.spaces.tuple.Tuple:
+            self.STATE_SHAPE        = tuple(map(lambda x: x.n, self.env.observation_space))
+        else:
+            self.STATE_SHAPE        = (self.env.observation_space.n,) 
+
+        self.eps                    = eps
+        self.NUM_ACTIONS            = self.env.action_space.n 
+        self.STATE_SHAPE_EXTENDED   = self.STATE_SHAPE + (self.NUM_ACTIONS,)
+        self.actions                = np.arange(self.NUM_ACTIONS)
+        self.policy, self.Qsa       = np.zeros(shape= (2,) + self.STATE_SHAPE_EXTENDED)
+        self.Vs                     = np.zeros(shape= self.STATE_SHAPE)
+        self.NUM_STATES_TOTAL       = np.prod(self.STATE_SHAPE)
+        self.test_rewards           = defaultdict(float)
+        self.steps_per_ep           = defaultdict(float)
+        self.env_iters              = 0
+            
+    def Qsa_init(self, Qsa = None, random = False, action = None, val = 0.5):
+        Qsa  = self.Qsa if Qsa is None else Qsa
+        Qsa *= 0
+        if random:
+            Qsa += np.random.randn(*Qsa.shape) 
+        else:
+            if action is not None:  Qsa[...,action] += val
+            else:                   Qsa             += val
+
+        return
+
+    def policy_update_whole(self, use_Qsa = True, action = None, eps = None):
+        eps = self.eps if eps is None else eps
+        if use_Qsa:             # extract greedy action from Q(s,a)
+            greedy =  argmax_random_choice(self.Qsa).flatten()
+        elif action is None:    # random action
+            greedy = np.random.randint(0, self.NUM_ACTIONS, size = (self.NUM_STATES_TOTAL,))
+        else:                   # specific action
+            assert type(action) == int, 'Action should be an integer index!'
+            greedy  = np.array([action]*self.NUM_STATES_TOTAL)
+        self.policy *= 0        # reset
+        self.policy += eps/(self.NUM_ACTIONS)
+        self.policy[np.arange(self.NUM_STATES_TOTAL),greedy] = (1 - eps + eps/(self.NUM_ACTIONS))
+
+        return
+
+    def best_action(self, state):   # with random tie break
+        return argmax_random_choice(self.Qsa[state])#.flatten()  #array(3) - > array([3])
+    
+    def sample_action(self, state, use_Qsa = True, eps = None):
+        eps = self.eps if eps is None else eps
+        if use_Qsa:
+            action = self.best_action(state) # with random tie break
+            policy = np.ones_like(self.actions)*eps/(self.NUM_ACTIONS)
+            policy[action] = (1 - eps + eps/(self.NUM_ACTIONS))
+        else:
+            policy = self.policy[state]
+
+        return np.random.choice(self.actions, p= policy)
+    
+    def state_remap(self,state):
+        if type(state) !=int and len(state) > 1:  return tuple(map(int,state))
+        else:               return (int(state),)
+    
+    def reset(self):
+        state = self.env.reset()[0]
+        return self.state_remap(state)
+    
+    def step(self, action):
+        state, reward, done = self.env.step(action)[:3]
+        state               = self.state_remap(state)
+        return state, reward, done
+    
+    def play_N_episodes(self, use_Qsa = False, N=100):
+        # pre-compute and use policy. 'cause its faster.
+        if not use_Qsa: self.policy_update_whole(use_Qsa = True)  # <<< gen pol from Q(s,a)
+        if N > 0:
+            reward_mean = 0
+            steps_mean  = 0
+            for _ in range(N):
+                state = self.reset()
+                s = 0
+                while True:
+                    action = self.sample_action(state, use_Qsa = use_Qsa)
+                    state, reward, done = self.step(action)
+                    steps_mean += 1
+                    reward_mean += reward
+                    s += 1
+                    if done or s > 6000: break
+                
+            self.steps_per_ep[self.env_iters] = (steps_mean/N)   
+            self.test_rewards[self.env_iters] = (reward_mean/N)
