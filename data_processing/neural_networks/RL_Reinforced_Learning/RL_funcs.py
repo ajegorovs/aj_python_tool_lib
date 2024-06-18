@@ -160,23 +160,22 @@ def plot(v_ace, v_ace_no, pol_ace, pol_ace_no, extent, lables1 = None, lables2 =
         ax[1,i].set_aspect(1)
 
     
-def plot_cliff_walking(policy,figsize=(12,4)):
+def plot_cliff_walking(policy,figsize=(12,4), aw = 0.2,hw = 0.3, hl = 0.25):
     # ChatGPT + modified
     fig, axes = plt.subplots(4, 12, figsize=figsize, sharex=True,sharey=True)
     plt.subplots_adjust(wspace=0, hspace=0)
     axes = axes.flatten()
     for i,(ax,arrows) in enumerate(zip(axes,policy)):
-        arrows2 = arrows.copy()
-        arrows2[arrows<0.5] = 0
-        #if all(arrows): continue
-        if arrows2[3]:  # Left arrow
-            ax.arrow(0.5, 0.5, -0.3, 0, head_width=0.1, head_length=0.1, fc='k', ec='k')
-        if arrows2[2]:  # Bottom arrow
-            ax.arrow(0.5, 0.5, 0, -0.3, head_width=0.1, head_length=0.1, fc='k', ec='k')
-        if arrows2[1]:  # Right arrow
-            ax.arrow(0.5, 0.5, 0.3, 0, head_width=0.1, head_length=0.1, fc='k', ec='k')
-        if arrows2[0]:  # Top arrow
-            ax.arrow(0.5, 0.5, 0, 0.3, head_width=0.1, head_length=0.1, fc='k', ec='k')
+        if sum(arrows) == 0: continue
+        arrows = arrows.copy()
+        arrows /= arrows.max()
+        p = lambda i :arrows[i]
+        ax.arrow(0.5, 0.5, 0, p(0)*aw , head_width=p(0)*hw, head_length=p(0)*hl, fc='k', ec='k')
+        ax.arrow(0.5, 0.5, p(1)*aw, 0 , head_width=p(1)*hw, head_length=p(1)*hl, fc='k', ec='k')
+        ax.arrow(0.5, 0.5, 0, -p(2)*aw, head_width=p(2)*hw, head_length=p(2)*hl, fc='k', ec='k')
+        ax.arrow(0.5, 0.5, -p(3)*aw, 0, head_width=p(3)*hw, head_length=p(3)*hl, fc='k', ec='k')
+        ax.set_xlim(0,1)
+        ax.set_ylim(0,1)
         ax.set_xticks([])
         ax.set_yticks([])
     plt.show()
@@ -260,6 +259,13 @@ class base_env():
 
         return np.random.choice(self.actions, p= policy)
     
+    def update_policy_via_Qsa(self,state, eps = None):
+        eps = self.eps if eps is None else eps
+        action = self.best_action(state) # with random tie break
+        policy = np.ones_like(self.actions)*eps/(self.NUM_ACTIONS)
+        policy[action] = (1 - eps + eps/(self.NUM_ACTIONS))
+        self.policy[state] = policy
+
     def state_remap(self,state):
         if type(state) !=int and len(state) > 1:  return tuple(map(int,state))
         else:               return (int(state),)
@@ -292,3 +298,27 @@ class base_env():
                 
             self.steps_per_ep[self.env_iters] = (steps_mean/N)   
             self.test_rewards[self.env_iters] = (reward_mean/N)
+
+
+def anim(store_Qs):
+    import matplotlib.animation as animation
+
+    sorted_time_steps = list(store_Qs.keys())
+    fig, ax = plt.subplots(figsize=(8,3))
+    cax = ax.matshow(store_Qs[sorted_time_steps[0]], cmap='viridis')
+    fig.colorbar(cax, location='bottom')
+    ax.set_xticks([])
+    ax.set_yticks([])
+
+    def init():
+        cax.set_array(store_Qs[sorted_time_steps[0]])
+        return [cax]
+
+    def update(frame):
+        matrix = store_Qs[sorted_time_steps[frame]]
+        cax.set_array(matrix)
+        fig.suptitle(f'episode: {sorted_time_steps[frame]}')
+        return [cax]
+
+    ani = animation.FuncAnimation(fig, update, frames=len(sorted_time_steps), init_func=init, interval=500, blit=True)
+    return ani
