@@ -1,4 +1,4 @@
-from data_processing.Regression.coarse_coding import tiles
+from data_processing.Regression.coarse_coding_bad_approach import tiles
 from data_processing.neural_networks.RL_Reinforced_Learning.RL_funcs import argmax_random_choice
 
 import numpy as np, gym
