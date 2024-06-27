@@ -11,7 +11,7 @@
             "program": "${file}",
             "console": "integratedTerminal",
             "justMyCode": true,
-            "cwd": "${fileDirname}",
+            "cwd": "${workspaceRoot}", //"${fileDirname}", // workspaceRoot for non-jupyter vscode launch so i can import from root
             "env": {
                 "PYTHONPATH": "${workspaceRoot}",  //  "${workspaceRoot}"${workspaceFolder}
             }
