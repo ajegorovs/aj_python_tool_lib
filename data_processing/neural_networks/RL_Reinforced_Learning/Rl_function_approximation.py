@@ -94,14 +94,25 @@ class base_env_class():
         (self.space_types, self.space_lims,
          self.action_type, self.action_lims) = sample_space_info(self.env).process_states()
         self.eps = eps
-        self.env_iters = 0
+        
+        assert self.action_type == 'int', 'continuous actions are hard. how to max_a Q(s,a)?'
 
+        self.NUM_ACTIONS    = self.env.action_space.n 
+        self.actions        = np.arange(self.NUM_ACTIONS)
+        self.policy_action  = np.zeros((self.NUM_ACTIONS,self.NUM_ACTIONS))
+        self.init_policy_action_entries()
+        self.env_iters      = 0
+
+    def init_policy_action_entries(self):
+        self.policy_action *= 0
+        self.policy_action += self.eps/(self.NUM_ACTIONS)
+        self.policy_action += np.eye(self.NUM_ACTIONS)*(1 - self.eps)
 
     def map_2_tuple(self,x):
         if type(x) == int:
             return (x,)
         else:
-            return tuple([a for a in state])
+            return tuple([a for a in x])
 
     def reset(self):
         state = self.env.reset()[0]
@@ -111,6 +122,7 @@ class base_env_class():
         state, reward, done = self.env.step(action)[:3]
         return self.map_2_tuple(state), reward, done
     
+   
 
 class approach_approx_V(base_env_class):
     """interested in states only.
@@ -123,11 +135,12 @@ class approach_approx_V(base_env_class):
         super().__init__(env_name, eps, *args, **kwargs)
         
         if all([a == 'int' for a in self.space_types] ):
-            self.state_emb = env_state_space_discrete(self.space_lims, None)
+            self.state_emb = env_state_space_discrete(self.space_lims)
         else:
             self.state_emb = env_state_space_continuous(self.space_types, self.space_lims, tile_params)
 
-        self.Wv   = np.zeros(self.state_emb.NUM_STATES_TOTAL)
+        self.Wv     = np.zeros(self.state_emb.NUM_STATES_TOTAL)
+        self.policy = np.zeros(self.state_emb.NUM_STATES_TOTAL, dtype = int)
 
     def init_Vs(self, random = False, val = 0.5):
         self.Wv *= 0
@@ -140,6 +153,10 @@ class approach_approx_V(base_env_class):
     def update_Wv(self, step_size, target, state):# change only weights active in state embedding
         self.Wv[self.state_emb.Xs(state)] += step_size*(target - self.Vs(state))
 
+    def sample_action(self, state):  # for discrete actions
+        greedy_action = self.policy[state]
+        return np.random.choice(self.actions, p= self.policy_action[greedy_action])
+    
 
 class approach_approx_Q(base_env_class):
     """ For now i only know how to deal with discrete actions. 
@@ -151,23 +168,13 @@ class approach_approx_Q(base_env_class):
         # expand state space with action space
         SA_type = self.space_types + (self.action_type,)
         SA_lims = self.space_lims + self.action_lims
-        assert self.action_type == 'int', 'continuous actions are hard. how to max_a Q(s,a)?'
+        
         if all([a == 'int' for a in SA_type]):
             self.state_emb = env_state_space_discrete(SA_lims)
         else: 
             self.state_emb = env_state_space_continuous(SA_type, SA_lims, tile_params)
 
-        self.NUM_ACTIONS    = self.env.action_space.n 
-        self.actions        = np.arange(self.NUM_ACTIONS)
-        self.policy_action  = np.zeros((self.NUM_ACTIONS,self.NUM_ACTIONS))
-        self.init_policy_action_entries()
         self.Wq             = np.zeros(self.state_emb.NUM_STATES_TOTAL)
-
-
-    def init_policy_action_entries(self):
-        self.policy_action *= 0
-        self.policy_action += self.eps/(self.NUM_ACTIONS)
-        self.policy_action += np.eye(self.NUM_ACTIONS)*(1 - self.eps)
 
     def init_Qsa(self, random = False, val = 0.5):
         self.Wq *= 0
