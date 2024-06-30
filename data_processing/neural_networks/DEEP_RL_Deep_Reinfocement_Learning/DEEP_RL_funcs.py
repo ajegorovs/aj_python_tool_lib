@@ -14,24 +14,26 @@ class MLP():
     def seq(self):
         layers = []
         for i,j in zip(self.layer_sizes[:-1],self.layer_sizes[1:]):
-            layers += [nn.Linear(i,j), self.act]
+            layers += [nn.Linear(i,j), self.act()]
 
-        layers[-1] = self.act_out
+        layers[-1] = self.act_out()
 
         return nn.Sequential(*layers)
 
-class policy(MLP):
+class Simple_PG(MLP):
     def __init__(self, inp_size, out_size, hidden_sizes, activation=nn.Tanh, activation_out=nn.Identity) -> None:
         super().__init__(inp_size, out_size, hidden_sizes, activation, activation_out)
-        
-    def get_policy(self,observation):
-        return Categorical(logits=self.seq(observation))
-    
-    @torch.no_grad()
-    def get_action(self, observation):
-        return self.get_policy(observation).sample()
-    
-    def compute_loss(self,observations, actions, rewards):
-        LogPs = self.get_policy(observations).log_prob(actions)
-        return -(LogPs * rewards).mean() # -1 to maximize
+        self.env_iters = 0
 
+    def get_policy(self,observation):
+        return Categorical(logits=self.mlp(torch.as_tensor(observation)))
+    
+    #@torch.no_grad()
+    def get_action(self, observation):
+        #observation = torch.Tensor(observation)
+        return self.get_policy(observation).sample().item()
+    
+    #@torch.no_grad()
+    def log_prob(self, observations, actions):
+        return self.get_policy(torch.as_tensor(observations)).log_prob(torch.as_tensor(actions))
+    
