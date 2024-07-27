@@ -28,8 +28,10 @@ plots/misc_tools:<br>
     * random methods that cannot be classified as standalone type.<br>
 
 Tutorial videos:
-* How to build GAT NN forward method using pytorch. General ideas about graphs and how to construct GCN and improve it to GAT NN:<br>
+*   How to build GAT NN forward method using pytorch. General ideas about graphs and how to construct GCN and improve it to GAT NN:<br>
 https://www.youtube.com/watch?v=Np-7edYi9zE&list=PLPPQEQmU1OB5sF0R4pV2E7_r1RI0qUZTE
+*   Deep Reinforcement Learning: Vanilla Policy Gradient, Natural Policy Gradient, Trusted Region Policy Optimization:<br>
+https://youtu.be/srmyivK63gg
 
 in vscode jupyter sets its working dir to file dir, so you cannot import modules from workspace. Change this:
 ![jup_repo_dir](image.png)

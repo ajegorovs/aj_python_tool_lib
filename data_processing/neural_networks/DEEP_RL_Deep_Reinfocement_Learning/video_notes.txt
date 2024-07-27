@@ -1,0 +1,41 @@
+Why learn about Natural Policy Gradient (NPG) before TRPO?
+-TRPO is ~superset method of NPG (in final implementation) = more difficult
+-TRPO is harder to understand intuitively
+conjugate gradient, backtracking line search
+
+What NPG explains?
+-NPG covers remaining stuff-KL divergence, weight update rule
+-NPG is can be understood as extension of "Vanilla" policy gradient (VPG)
+
+What VPG covers?
+- episode trajectory, episode reward, policy performance metric
+	policy parameter update rule, objective function
+----------------------
+VPG: Go through VPG
+----------------------
+NPG:
+- RL optimization is fragile
+- KL divergence. Hows and whys.
+- curvature corrects descent direction, controls step size
+-- it is local approximation, if obj.f is quadratic-> direct sol
+- KL divergence
+-- qualitatively similar to abs distance
+-- why we need it in NPG
+-- How to express in terms of Fisher Information Matrix (FIM). 
+-- FIM is about sensitivity- obj. func curvature
+- Why is curvature. Why its important?
+- construct optimization objective function
+- find step direction (in parameter space)
+- find step length
+----------------------
+TRPO:
+- define and check policy improvement metric (custom name)
+- see how it can be converted to estimation over old data, under which assumption 
+- Surrogate reward
+- parameter update (same as in NPG)
+- parameter update using CG
+-- CG lore
+-- Hessian-vector trick for CG
+- policy parametrization
+-- discrete actions
+-- continuous actions
