@@ -33,19 +33,25 @@ class TRPO_train_wrap():
         
         self.progress     = []
         self.progress_std = []
+        self.progress_iters = []
         self.step_lengths = []
         
+    def save_weights(self, case_name, base_path):
+        """torch.save(self.actor.mlp.state_dict(), os.path.join(base_path,case_name+'_actor.pt'))
+        torch.save(self.critic.dense.state_dict(), os.path.join(base_path,case_name+'_critic.pt'))"""
+        torch.save(self.actor.mlp.state_dict(), os.path.join(base_path,case_name+'_actor.pt'))
+        torch.save(self.critic.state_dict()   , os.path.join(base_path,case_name+'_critic.pt'))
 
+    def load_weights(self, case_name, base_path):
+        """self.actor.mlp.load_state_dict(torch.load(os.path.join(base_path,case_name+'_actor.pt')))
+        self.critic.dense.load_state_dict(torch.load(os.path.join(base_path,case_name+'_critic.pt')))"""
+        self.actor.mlp.load_state_dict(   torch.load(os.path.join(base_path,case_name+'_actor.pt')))
+        self.critic.load_state_dict(      torch.load(os.path.join(base_path,case_name+'_critic.pt')))
 
-    def save_weights(self, case_name, base_path = None):
-        if base_path is None:
-            base_path = os.path.join('data_processing', 'neural_networks', 'DEEP_RL_Deep_Reinforcement_Learning','TRPO_Report')
-        torch.save(self.actor.mlp.state_dict(), os.path.join(base_path,case_name+'.pt'))
-
-    def init_train_params(self, eps_per_batch   = 3   , endless         = False,max_ep_len      = 15000,
-                                delta           = 1e-2, use_gamma       = True, backtrack_coeff = 0.8,
-                                backtrack_iters = 10  , damping         = 0.1 , use_FIM         = False,
-                                use_CG          = True, CG_Iters        = 20  , inverse_regularization  = 0.001):
+    def init_train_params(self, eps_per_batch   = 3   , endless         = False, max_ep_len      = 15000,
+                                delta           = 1e-2, use_gamma       = True , backtrack_coeff = 0.8,
+                                backtrack_iters = 10  , damping         = 0.1  , use_FIM         = False,
+                                use_CG          = True, CG_Iters        = 10   , critic_iters    = 200, inverse_regularization  = 0.001):
         self.eps_per_batch  = eps_per_batch
         self.endless        = endless
         self.max_ep_len     = max_ep_len
@@ -55,6 +61,7 @@ class TRPO_train_wrap():
         self.use_FIM        = use_FIM
         self.use_CG         = use_CG
         self.CG_Iters       = CG_Iters
+        self.critic_iters   = critic_iters
         self.backtrack_coeff        = backtrack_coeff
         self.backtrack_iters        = backtrack_iters
         self.inverse_regularization = inverse_regularization
@@ -76,13 +83,13 @@ class TRPO_train_wrap():
             advantages = self.env.advantages_GAE(self.critic, **self.actor.tensor_params)
             rewards_to_go = self.env.rewards_2_go(self.use_gamma)
             # ========= Fit Value function =============
-            self.critic.train(self.env.batch_states, rewards_to_go, n_iters=1000) # fit state value function
+            self.critic.train(self.env.batch_states, rewards_to_go, n_iters=self.critic_iters) # fit state value function
             # ========= Prepare 'new' and old policy =============
             self.actor.batch_calc_logPs(self.env.batch_states, self.env.batch_actions)
             self.actor.prep_old_policy()
             # ====== First iter grad reduces to NPG grad ==========
             self.actor.calc_NPG_logP_grads()
-            self.actor.grad = self.actor.calc_NPG_grad(advantages)
+            self.actor.grad = self.actor.calc_NPG_grad(advantages, self.env.chunks)
             # ========== Fisher Information Matrix approach ===============
             if self.use_FIM:
                 FIM  = self.actor.calf_FIM(self.inverse_regularization)
@@ -116,7 +123,8 @@ class TRPO_train_wrap():
                     torch.cuda.empty_cache()
 
             # ====== Surrogate reward for backtracking reference ==========
-            self.actor.U_rew     = advantages.flatten().mean(dim = 0)    # when old=new ratio is 1.
+            l_split             = torch.split(advantages.flatten(), self.env.chunks) # when old=new ratio is 1.
+            self.actor.U_rew    = torch.as_tensor([c.sum(dim = 0) for c in l_split], **self.env.tensor_params).mean(dim = 0)
             self.actor.U_rew_old = self.actor.U_rew.clone().detach()  # dont need grad if we calc NPG grad
             # ====== Update policy to NPG solution ==========
             alpha = torch.sqrt(2*self.delta/(torch.dot(self.actor.grad,x)+EPS))   # NPG step length
@@ -129,7 +137,7 @@ class TRPO_train_wrap():
                     # reevaluate probs using new policy 
                     self.actor.batch_calc_logPs(self.env.batch_states, self.env.batch_actions)
                     # update Surrogate reward and KL divergence for new policy
-                    self.actor.U_rew = self.actor.calc_surrogate_reward(advantages)
+                    self.actor.U_rew = self.actor.calc_surrogate_reward(advantages, self.env.chunks)
                     d_reward            = self.actor.U_rew - self.actor.U_rew_old  
                     dkl                 = self.actor.calc_KL_div()
 
@@ -148,7 +156,7 @@ class TRPO_train_wrap():
                     
             # =============== Calc stats ==================
             if 1 == 1:
-                chunks_r    = torch.split(self.env.batch_rewards,self.env.chunks)       
+                chunks_r    = torch.split(self.env.batch_rewards, self.env.chunks)       
                 ep_rew_sum  = torch.tensor([rew_ep.sum() for rew_ep in chunks_r])
                 avg_cum_reward_std, avg_cum_reward_mean = torch.std_mean(ep_rew_sum)
                 avg_cum_reward_std, avg_cum_reward_mean = avg_cum_reward_std.item(), avg_cum_reward_mean.item()
@@ -159,7 +167,7 @@ class TRPO_train_wrap():
                 tq_iter.set_postfix(**tq_prms)
                 self.progress.append(avg_cum_reward_mean)
                 self.progress_std.append(avg_cum_reward_std)
-                self.actor.grad = None
+                self.progress_iters.append(self.env.env_iters)
 
 if __name__ == "__main__":
     if 1 == -1:
@@ -173,6 +181,6 @@ if __name__ == "__main__":
     device      = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     env_CP      = TRPO_env(env, device=device)
     trainer     = TRPO_train_wrap(env_CP)
-    trainer.init_train_params()
-    trainer.train(num_iters=2)
+    trainer.init_train_params(eps_per_batch=5, endless=False, max_ep_len=4000, delta=0.01, critic_iters = 100)
+    trainer.train(num_iters=20)
 

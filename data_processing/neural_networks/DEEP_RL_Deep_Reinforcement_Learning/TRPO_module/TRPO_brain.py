@@ -80,17 +80,35 @@ class TRPO_Proto_Policy():
             self.logP_grads[i] = self.calc_flat_grad(self.logP[i])
         return self.logP_grads 
     
-    def calc_NPG_grad(self, advantages):
-        """Calculates NPG type gradient of objective function"""
-        grad = self.logP_grads*advantages.reshape(-1,1)
-        grad = grad.mean(dim=0)
-        return grad
+    # def mean_sum_chunk(x: torch.Tensor, chunks: List[int]):
+    def mean_sum_chunk(self, x: torch.Tensor, chunks: List[int]):
+        """Sum dim=0 of chunks, then mean dim=0"""
+        temp = torch.zeros((len(chunks), x.shape[1]),**self.tensor_params)
+        x_split = torch.split(x, chunks)
+        for i,z in enumerate(x_split):
+            temp[i] = z.sum(dim=0)
+        return temp.mean(dim=0)
     
-    def calc_surrogate_reward(self, advantages):
+    def calc_NPG_grad(self, advantages, chunks):
+        """Calculates NPG type gradient of objective function"""
+        grad = self.logP_grads*(advantages.reshape(-1,1))
+        return self.mean_sum_chunk(grad, chunks)
+        # if chunks is None:
+        #     return grad.mean(dim=0)
+        # else:
+        #     return self.mean_sum_chunk(grad, chunks)
+    
+    def calc_surrogate_reward(self, advantages, chunks):
         """Calculate TRPO type objective function /w importance sampling"""
         loss = torch.exp(self.logP - self.logP_old)*(advantages.flatten())
-        loss = loss.mean(dim = 0)
-        return loss
+        l_split = torch.split(loss, chunks)
+        return torch.as_tensor([c.sum(dim = 0) for c in l_split], **self.tensor_params).mean(dim = 0)
+        # if chunks is None:
+        #     return loss.mean(dim = 0)
+        # else:
+        #     l_split = torch.split(loss, chunks)
+        #     return torch.as_tensor([c.sum(dim = 0) for c in l_split], **self.tensor_params).mean(dim = 0)
+
     
     def calf_FIM(self, regularization = 0.001):
         """ Calculates Fisher's Information Matrix (FIM) via gradients of logP_old.

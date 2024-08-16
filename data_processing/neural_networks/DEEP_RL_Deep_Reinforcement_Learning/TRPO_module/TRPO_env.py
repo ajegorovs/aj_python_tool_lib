@@ -5,7 +5,7 @@ class TRPO_env():
         automatically adds non terminal states, actions and reward into a buffer
         tracks episode rewards and calculates cumulative future rewards
         """
-    def __init__(self, env, device = 'cpu', lam = 0.95, gamma = 0.99, **kwargs) -> None:
+    def __init__(self, env: gym.Env, device = 'cpu', lam = 0.95, gamma = 0.99, **kwargs) -> None:
         #self.env = gym.make(id, **kwargs)
         self.env = env
         self.env_iters          = 0
